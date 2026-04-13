@@ -1,0 +1,32 @@
+Config.env must be populated with Prefect details for CANFAR session to connect to Prefect:
+
+PREFECT_API_URL : IP address of the Prefect server e.g. http://<IP address>:4200/api
+PREFECT_API_AUTH_STRING : auth string to let us use the Prefect server in CANFAR
+
+The rest of the values in config.env are now optional. All the secrets including database details are stored in Prefect server.
+
+1. Github Actions Secrets:
+--------------------------
+HARBOR_PASSWORD : Harbor registry password to push images to run on Canfar
+HARBOR_USERNAME : Harbor username to push images 
+PREFECT_API_AUTH_STRING : auth string to let us use the Prefect server in the code
+PREFECT_API_URL : IP address of the Prefect server to bypass the OAuth Proxy (Github login)
+
+2. Prefect secrets (under Blocks):
+----------------------------------
+cadc-proxy-pem | Generate cadcproxy.pem with CANFAR interactive session, and copy the content here. 
+database-host | POSSUM database IP address
+database-name | POSSUM database name
+database-password |  POSSUM database password
+database-port |  POSSUM database port
+database-user |  POSSUM database username
+possum-status-sheet |  link to POSSUM status Google spreadsheet
+possum-status-token |  Copy the content of the json token to access the possum-status-sheet above
+
+You can still use your own config.env as below to override the production secrets for testing purposes.
+1. Rename config.env.example to config.env.
+2. Enter ausSRC database details in the .env file. 
+3. Enter Google spreadsheet token
+4. Update Google spreadsheet file locations (only if the files are different, e.g. for testing)
+
+

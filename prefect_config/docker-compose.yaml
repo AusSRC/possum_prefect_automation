@@ -1,0 +1,126 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: REDACTED
+      POSTGRES_DB: prefect
+    ports:
+      - "5432:5432"   # Expose Postgres to host  
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prefect"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  prefect-server:
+    image: prefecthq/prefect:3.4.25-python3.12 #This matches github actions so there are no incompatibility issues!
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PREFECT_API_URL: https://possum-prefect.aussrc.org/api
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+      # Enable API basic auth
+      PREFECT_SERVER_API_AUTH_STRING: "REDACTED"
+      # Bind only to localhost (important!)
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: 6379
+      PREFECT_REDIS_MESSAGING_DB: 0
+    command: prefect server start --no-services
+    ports:
+      - "4200:4200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:4200/api/health', timeout=1)"]  
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s 
+
+  prefect-services:
+    image: prefecthq/prefect:3.4.25-python3.12
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
+      PREFECT_MESSAGING_BROKER: prefect_redis.messaging
+      PREFECT_MESSAGING_CACHE: prefect_redis.messaging
+      PREFECT_REDIS_MESSAGING_HOST: redis
+      PREFECT_REDIS_MESSAGING_PORT: 6379
+      PREFECT_REDIS_MESSAGING_DB: 0
+    command: prefect server services start
+
+  process-worker:
+    image: prefecthq/prefect:3.4.25-python3.12
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    environment:
+      PREFECT_API_URL: http://prefect-server:4200/api
+      PREFECT_API_AUTH_STRING: REDACTED
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y postgresql-client &&
+        exec prefect worker start --pool local-pool"
+    restart: on-failure
+    volumes:
+      - /root/prefect-backups:/root/prefect-backups               # Host DB backup directory mounted in container
+
+  
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+    restart: unless-stopped
+    environment:
+      # GitHub OAuth
+      OAUTH2_PROXY_PROVIDER: github
+      OAUTH2_PROXY_CLIENT_ID: "REDACTED"
+      OAUTH2_PROXY_CLIENT_SECRET: "REDACTED"
+
+      # Required
+      OAUTH2_PROXY_COOKIE_SECRET: "REDACTED"
+      OAUTH2_PROXY_COOKIE_SECURE: "true"
+      OAUTH2_PROXY_COOKIE_SAMESITE: "lax"
+      OAUTH2_PROXY_COOKIE_DOMAINS: "aussrc.org"  
+
+      # Access control
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_SCOPE: "user:email read:org"
+      OAUTH2_PROXY_SESSION_STORE_TYPE: "cookie"
+       
+      # List of users allowed
+      OAUTH2_PROXY_GITHUB_USERS: "riniangreani,axshen,ErikOsinga,Cameron-Van-Eck"  
+      # Networking
+      OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
+      OAUTH2_PROXY_REDIRECT_URL: "https://possum-prefect.aussrc.org/oauth2/callback"
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      OAUTH2_PROXY_SET_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"  
+      # We only use oauth2-proxy for auth, not proxying
+      OAUTH2_PROXY_UPSTREAM: "https://possum-prefect.aussrc.org/dashboard"
+    ports:
+      - "127.0.0.1:4180:4180"
+
+volumes:
+  postgres_data:
+  redis_data:
