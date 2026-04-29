@@ -23,3 +23,15 @@ Please note, PREFECT_API_AUTH_STRING is used on the client side, and this corres
 
 To manage the flows from the web UI, we use possum-prefect.aussrc.org. 
 
+To resolve the possum-prefect.aussrc.org URL, we added Proxied (orange) DNS entry in Cloudflare. 
+
+To start Prefect container:
+
+* cd to the location of docker-compose.yaml
+
+* `docker compose up -d`
+
+To reload Nginx after config changes:
+
+`sudo systemctl reload nginx`
+
