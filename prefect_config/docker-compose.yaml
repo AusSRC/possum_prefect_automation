@@ -78,11 +78,9 @@ services:
     environment:
       PREFECT_API_URL: http://prefect-server:4200/api
       PREFECT_API_AUTH_STRING: REDACTED
+    build: .
     command: >
-      bash -c "
-        apt-get update &&
-        apt-get install -y postgresql-client &&
-        exec prefect worker start --pool local-pool"
+      prefect worker start --pool local-pool
     restart: on-failure
     volumes:
       - /root/prefect-backups:/root/prefect-backups               # Host DB backup directory mounted in container
