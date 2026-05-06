@@ -46,20 +46,25 @@ server {
 	    proxy_set_header Content-Length "";
         proxy_pass_request_body off;
     }
-
-    # Prefect UI + API
+    # Prefect UI
     location / {
         auth_request /oauth2/auth;
         error_page 401 = /oauth2/sign_in;
         proxy_set_header Authorization "Basic REDACTED";
-        
+
         # Get IP address from docker inspect prefect-server-prefect-server-1
-	    proxy_pass http://172.18.0.6:4200; 
+        proxy_pass http://172.18.0.6:4200;
         proxy_set_header Host $host;
-	    proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
     }
+    # Prefect API (bypass oauth2-proxy)
+    location /api/ {
+        proxy_pass http://127.0.0.1:4200/api/;
 
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+    }
 }
