@@ -6,7 +6,7 @@ TEST_DATABASE_NAME=
 TEST_DATABASE_USER=
 TEST_DATABASE_PASSWORD=
 
-!!IMPORTANT: The database has to be named possum_test to reduce the possibility of using the wrong database for tests, as they will be emptied at the end of the tests!!
+**!!IMPORTANT: The database has to be named possum_test to reduce the possibility of using the wrong database for tests, as they will be emptied at the end of the tests!!**
 
 You need to provide an empty database for the tests to run. It is easy to do this with psql. 
 The tests will create possum schema if it's not already there, and it will be dropped with the contents afterwards.
