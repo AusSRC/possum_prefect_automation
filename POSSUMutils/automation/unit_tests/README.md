@@ -1,10 +1,10 @@
 The tests use the database connection details used in test.env file. Please create the test.env file with the following keys:
 
-TEST_DATABASE_HOST=
-TEST_DATABASE_PORT=
-TEST_DATABASE_NAME=
-TEST_DATABASE_USER=
-TEST_DATABASE_PASSWORD=
+* TEST_DATABASE_HOST=
+* TEST_DATABASE_PORT=
+* TEST_DATABASE_NAME=
+* TEST_DATABASE_USER=
+* TEST_DATABASE_PASSWORD=
 
 **!!IMPORTANT: The database has to be named possum_test to reduce the possibility of using the wrong database for tests, as they will be emptied at the end of the tests!!**
 
@@ -16,10 +16,10 @@ How to run the tests:
 =====================
 In the root directory (POSSUMutils), to run individual test: 
 
-python3 -m unittest <automation.unit_tests.test-file-name>
+`python3 -m unittest <automation.unit_tests.test-file-name>`
 
 OR, to run all tests:
  
-python -m unittest discover
+`python -m unittest discover`
 
-python -m unittest discover -s automation/unit_tests
+`python -m unittest discover -s automation/unit_tests`
