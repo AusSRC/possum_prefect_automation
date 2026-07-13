@@ -1,4 +1,0 @@
-gspread
-psycopg2-binary==2.9.10
-python-dotenv
-prefect==3.4.25
